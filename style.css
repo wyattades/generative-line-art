@@ -1,3 +1,5 @@
+/* Global settings */
+
 html {
   font-family: Verdana, Geneva, Tahoma, sans-serif;
 }
@@ -8,9 +10,25 @@ body {
   display: flex;
 }
 
+p {
+  margin: 0;
+}
+
+a {
+  color: #AAA;
+  white-space: nowrap;
+}
+a:hover {
+  color: #666;  
+}
+
+/* Layout/containers */
+
 #root {
   display: flex;
   flex: 1;
+  overflow: hidden;
+  min-width: 300px;
 }
 #root > * {
   background-color: darkgrey;
@@ -21,18 +39,24 @@ body {
   flex-direction: column;
   justify-content: space-between;
   border-left: 1px solid #AAA;
-  width: 400px;
 }
 
 header, main, footer {
-  padding: 16px;
+  padding: 24px 16px;
 }
 
 header {
   border-bottom: 1px solid #AAA;
 }
-header h1 {
-  font-family: 'Courier New', Courier, monospace
+header h1 { 
+  font-weight: normal;
+  font-size: 2.5rem;
+
+  /* Fancy cursive title with gradient */
+  font-family: 'Lobster', cursive;
+  background: linear-gradient(to right, #88d1ff, #e584fc);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 main {
@@ -44,9 +68,23 @@ footer {
   color: #AAA;
 }
 
-a {
-  color: #AAA;
+/* General classes */
+
+.row {
+  display: flex;
+  justify-content: space-around;
 }
-a:hover {
-  color: #666;  
+.row > * {
+  margin: 0 8px;
+}
+
+/* Console styling */
+
+label {
+  font-weight: bold;
+  margin-right: 8px;
+}
+
+input[type="color"] {
+  width: 80px;
 }

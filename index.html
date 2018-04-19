@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <title>Generative Line Art</title>
+  <link rel="shortcut icon" href="favicon.png">
+  <link href="https://fonts.googleapis.com/css?family=Lobster" rel="stylesheet" async>
   <link rel="stylesheet" type="text/css" href="style.css">
   <script src="lib/two.min.js"></script>
 </head>
@@ -13,15 +15,23 @@
   <div id="console">
     <header>
       <h1>Generative Line Art</h1>
-      <p><a href="https://github.com/wyattades/generative-line-art">Github</a></p>
+      <div class="row">
+        <p><a href="https://github.com/wyattades/generative-line-art">Github</a></p>
+        <p><a href="#" id="save-config">Save Config</a></p>
+        <p><a href="#" id="load-config">Load Config</a></p>
+      </div>
     </header>
     <main>
-      <p>Console stuff</p>
+      <form id="controls">
+        <label for="color">Color</label>
+        <input type="color" id="color" name="color"/>
+      </form>
     </main>
     <footer>
       <p>Made by <a href="https://wyattades.com">@wyattades</a> and <a href="https://github.com/shleewhite">@shleewhite</a></p>
     </footer>
   </div>
   <script src="index.js"></script>
+  <script src="save-config.js"></script>
 </body>
 </html>
