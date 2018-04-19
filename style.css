@@ -1,0 +1,52 @@
+html {
+  font-family: Verdana, Geneva, Tahoma, sans-serif;
+}
+
+body {
+  margin: 0;
+  height: 100vh;
+  display: flex;
+}
+
+#root {
+  display: flex;
+  flex: 1;
+}
+#root > * {
+  background-color: darkgrey;
+}
+
+#console {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border-left: 1px solid #AAA;
+  width: 400px;
+}
+
+header, main, footer {
+  padding: 16px;
+}
+
+header {
+  border-bottom: 1px solid #AAA;
+}
+header h1 {
+  font-family: 'Courier New', Courier, monospace
+}
+
+main {
+  flex: 1;
+}
+
+footer {
+  border-top: 1px solid #AAA;
+  color: #AAA;
+}
+
+a {
+  color: #AAA;
+}
+a:hover {
+  color: #666;  
+}
