@@ -6,8 +6,7 @@ html {
 
 body {
   margin: 0;
-  height: 100vh;
-  display: flex;
+  min-height: 100vh;
 }
 
 p {
@@ -29,43 +28,10 @@ a:hover {
   flex: 1;
   overflow: hidden;
   min-width: 300px;
+  /* border-right: 1px solid #AAA; */
 }
 #root > * {
   background-color: darkgrey;
-}
-
-#console {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  border-left: 1px solid #AAA;
-}
-
-header, main, footer {
-  padding: 24px 16px;
-}
-
-header {
-  border-bottom: 1px solid #AAA;
-}
-header h1 { 
-  font-weight: normal;
-  font-size: 2.5rem;
-
-  /* Fancy cursive title with gradient */
-  font-family: 'Lobster', cursive;
-  background: linear-gradient(to right, #88d1ff, #e584fc);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-main {
-  flex: 1;
-}
-
-footer {
-  border-top: 1px solid #AAA;
-  color: #AAA;
 }
 
 /* General classes */
@@ -78,13 +44,75 @@ footer {
   margin: 0 8px;
 }
 
-/* Console styling */
-
-label {
-  font-weight: bold;
-  margin-right: 8px;
+.flex-multiline {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
 }
 
-input[type="color"] {
-  width: 80px;
+.flex-row {
+  display: flex;
+  flex-direction: row;
+}
+
+.layout-column {
+  display: flex;
+  flex-direction: column;
+}
+.layout-column > header, .layout-column > footer {
+  padding: 24px 16px;
+}
+.layout-column > header {
+  border-bottom: 1px solid #AAA;
+}
+.layout-column > main {
+  display: flex;
+  flex: 1;
+}
+.layout-column > footer {
+  border-top: 1px solid #AAA;
+  color: #AAA;
+}
+
+.fancy-title {
+  display: inline-block;
+
+  font-weight: normal;
+  font-size: 2.5rem;
+
+  /* Fancy cursive title with gradient */
+  color: #e584fc;
+  font-family: 'Lobster', cursive;
+}
+@supports (-webkit-background-clip: text) or (background-clip: text) {  
+  .fancy-title {
+    background: linear-gradient(to right, #88d1ff, #e584fc);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+}
+
+.subtitle {
+  font-size: 24px;
+  font-style: italic;
+  color: #AAA;
+}
+
+.iframe-container {
+  padding: 0;
+  flex-direction: column;
+}
+.iframe-container iframe {
+  border: 0;
+  display: flex;
+  flex: 1;
+}
+
+/* Console styling */
+
+.qs_main {
+  position: static;
+  box-shadow: none;
+  width: 100%;
 }

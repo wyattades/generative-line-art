@@ -9,29 +9,23 @@
   <link href="https://fonts.googleapis.com/css?family=Lobster" rel="stylesheet" async>
   <link rel="stylesheet" type="text/css" href="style.css">
   <script src="lib/two.min.js"></script>
+  <script src="lib/quicksettings.min.js"></script>
 </head>
-<body>
+<body class="flex-row">
   <div id="root"></div>
-  <div id="console">
+  <div class="layout-column">
     <header>
-      <h1>Generative Line Art</h1>
+      <h1 class="fancy-title">Generative Line Art</h1>
       <div class="row">
         <p><a href="https://github.com/wyattades/generative-line-art">Github</a></p>
-        <p><a href="#" id="save-config">Save Config</a></p>
-        <p><a href="#" id="load-config">Load Config</a></p>
+        <p><a href="examples">Examples</a></p>
       </div>
     </header>
-    <main>
-      <form id="controls">
-        <label for="color">Color</label>
-        <input type="color" id="color" name="color"/>
-      </form>
-    </main>
+    <main id="controls"></main>
     <footer>
       <p>Made by <a href="https://wyattades.com">@wyattades</a> and <a href="https://github.com/shleewhite">@shleewhite</a></p>
     </footer>
   </div>
   <script src="index.js"></script>
-  <script src="save-config.js"></script>
 </body>
 </html>

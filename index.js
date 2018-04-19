@@ -1,5 +1,5 @@
 // Enable Two.js for ESLint and JSDoc (for VSCode)
-/* global Two */
+/* global Two, QuickSettings */
 /// <reference path="./lib/two.d.js" />
 
 /*
@@ -16,15 +16,9 @@ const rand = (min, max) => {
 const $container = document.getElementById('root');
 const $controls = document.getElementById('controls');
 
-const control = (key, onChange) => {
-  const $el = $controls.elements[key];
-  if (!$el) throw new Error('Invalid control key: ' + key);
-
-  $el.addEventListener('change', onChange);
-  return () => {
-    $el.removeEventListener('change', onChange);
-  };
-};
+const settings = QuickSettings.create(0, 0, 'Settings', $controls);
+settings.addNumber('Test', 0, 100, 20, 1, null);
+settings.saveInLocalStorage('config');
 
 /*
   Setup two.js
@@ -66,8 +60,3 @@ two.bind('update', (frameCount) => { // run for 100 frames
     line.vertices.push(v);
   }
 }).play();
-
-control('color', (e) => {
-  lines.stroke = e.target.value;
-  two.update();
-});
