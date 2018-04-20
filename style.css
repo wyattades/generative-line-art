@@ -1,5 +1,13 @@
 /* Global settings */
 
+@font-face {
+  font-family: 'Lobster';
+  font-style: normal;
+  font-weight: 400;
+  src: local('Lobster Regular'), local('Lobster-Regular'), url(lib/Lobster.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
 html {
   font-family: Verdana, Geneva, Tahoma, sans-serif;
 }
@@ -109,10 +117,60 @@ a:hover {
   flex: 1;
 }
 
-/* Console styling */
+/* Override controls styling (partly borrowed from https://github.com/liabru/dat-gui-light-theme) */
 
-.qs_main {
-  position: static;
-  box-shadow: none;
+.dg.main {
   width: 100%;
+}
+.dg.main.taller-than-window .close-button {
+  border-top: 1px solid #ddd;
+}
+.dg.main .close-button {
+  background-color: #e8e8e8;
+}
+.dg.main .close-button:hover {
+  background-color: #ddd;
+}
+.dg {
+  color: #555;
+  text-shadow: none !important;
+}
+.dg.main::-webkit-scrollbar {
+  background: #fafafa;
+}
+.dg.main::-webkit-scrollbar-thumb {
+  background: #bbb;
+}
+.dg li:not(.folder) {
+  background: #fafafa;
+  border-bottom: 1px solid #ddd;
+}
+.dg li.save-row .button {
+  text-shadow: none !important;
+}
+.dg li.title {
+  background: #e8e8e8 url(data:image/gif;base64,R0lGODlhBQAFAJEAAP////Pz8////////yH5BAEAAAIALAAAAAAFAAUAAAIIlI+hKgFxoCgAOw==) 6px 10px no-repeat;
+}
+.dg .cr.function:hover, .dg .cr.boolean:hover {
+  background: #fff;
+}
+.dg .c input[type=text] {
+  background: #e9e9e9;
+}
+.dg .c input[type=text]:hover {
+  background: #eee;
+}
+.dg .c input[type=text]:focus {
+  background: #eee;
+  color: #555;
+}
+.dg .c .slider {
+  background: #e9e9e9;
+}
+.dg .c .slider:hover {
+  background: #eee;
+}
+.dg li.save-row .button, .dg li.save-row .button.gears {
+  background-color: #bbb;
+  /* box-shadow: none; */
 }
