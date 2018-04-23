@@ -45,11 +45,11 @@ lines.translation.set(100, 100);
 
 let iter = 0;
 
-const init = (amount) => {
+const init = () => {
   iter = 0;
   lines.remove(lines.children);
 
-  for (let i = 0; i < amount; i++) { // add 20 lines
+  for (let i = 0; i < config.Lines; i++) { // add 20 lines
     const line = two.makeCurve(0, i * 22, true);
     lines.add(line);
   }
@@ -58,7 +58,23 @@ const init = (amount) => {
   two.play();
 };
 
-two.bind('update', (frameCount) => { // run for 100 frames
+const addLines = () => {
+  // if (iter < 100) iter++;
+  // else if (iter === 100) {
+  //   two.pause();
+  //   iter++;
+  //   return;
+  // }
+  // else return;
+  // moveLines();
+
+  // for (const line of lines.children) {
+  //   const v = new Two.Vector(iter * 5, line.vertices[line.vertices.length-1].y + rand(-5, 5));
+  //   line.vertices.push(v);
+  // }
+};
+
+const moveLines = () => {
   if (iter < 100) iter++;
   else if (iter === 100) {
     two.pause();
@@ -67,10 +83,30 @@ two.bind('update', (frameCount) => { // run for 100 frames
   }
   else return;
 
-  for (const line of lines.children) {
-    const v = new Two.Vector(iter * 5, line.vertices[line.vertices.length-1].y + rand(-5, 5));
+  for (let i = 0; i < lines.children.length; i++) {
+    let weight = 0;
+    const imp = config['Sibling Weight'];
+    if (i > 0) {
+      const prev = lines.children[i - 1];
+      weight -= imp * prev.vertices[prev.vertices.length - 1].y;
+      console.log(prev.vertices[prev.vertices.length - 1].y);
+    }
+
+    if (i < lines.children.length - 1) {
+      const next = lines.children[i + 1];
+      weight += imp * next.vertices[next.vertices.length - 1].y;
+      console.log(next.vertices[next.vertices.length - 1].y);
+    }
+
+    const line = lines.children[i];
+    const v = new Two.Vector(iter * 5, line.vertices[line.vertices.length-1].y + rand(-5, 5) + weight);
     line.vertices.push(v);
   }
+};
+
+two.bind('update', (frameCount) => { // run for 100 frames
+  // addLines();
+  moveLines();
 }).play();
 
 /*
@@ -83,6 +119,7 @@ const config = {
   ConsoleLog: () => console.log('Yes!'),
   IsGood: false,
   Speed: 0.1,
+  'Sibling Weight': 0.1,
 };
 
 const gui = new dat.GUI({
@@ -96,8 +133,8 @@ const gui = new dat.GUI({
 
 gui.remember(config);
 
-gui.add(config, 'Lines', 0, 100, 1).onFinishChange((val) => {
-  init(val);
+gui.add(config, 'Lines', 0, 100, 1).onFinishChange(() => {
+  init();
 });
 gui.addColor(config, 'Color').onChange((val) => {
   lines.stroke = val;
@@ -106,6 +143,9 @@ gui.addColor(config, 'Color').onChange((val) => {
 gui.add(config, 'ConsoleLog');
 gui.add(config, 'IsGood');
 gui.add(config, 'Speed', { Stopped: 0, Slow: 0.1, Fast: 5 } );
+gui.add(config, 'Sibling Weight').min(0).max(1).onFinishChange(() => {
+  init();
+});
 
 init(config.Lines);
 
