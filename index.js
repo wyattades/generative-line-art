@@ -60,7 +60,11 @@ const init = (amount) => {
 
 two.bind('update', (frameCount) => { // run for 100 frames
   if (iter < 100) iter++;
-  else if (iter === 100) two.pause();
+  else if (iter === 100) {
+    two.pause();
+    iter++;
+    return;
+  }
   else return;
 
   for (const line of lines.children) {
@@ -73,7 +77,7 @@ two.bind('update', (frameCount) => { // run for 100 frames
   Controls
 */
 
-const defaults = {
+const config = {
   Lines: 20,
   Color: '#000000',
   ConsoleLog: () => console.log('Yes!'),
@@ -85,27 +89,25 @@ const gui = new dat.GUI({
   name: 'My GUI',
   autoPlace: false,
   useLocalStorage: true,
+  lightTheme: true,
+  showCloseButton: false,
   width: '_', // invalidate width
 });
 
-gui.remember(defaults);
+gui.remember(config);
 
-const Lines = gui.add(defaults, 'Lines', 0, 100, 1).onFinishChange((val) => {
+gui.add(config, 'Lines', 0, 100, 1).onFinishChange((val) => {
   init(val);
 });
-gui.addColor(defaults, 'Color').onChange((val) => {
+gui.addColor(config, 'Color').onChange((val) => {
   lines.stroke = val;
   two.render(); // docs say use two.update();
 });
-gui.add(defaults, 'ConsoleLog');
-gui.add(defaults, 'IsGood');
-gui.add(defaults, 'Speed', { Stopped: 0, Slow: 0.1, Fast: 5 } );
+gui.add(config, 'ConsoleLog');
+gui.add(config, 'IsGood');
+gui.add(config, 'Speed', { Stopped: 0, Slow: 0.1, Fast: 5 } );
 
-init(Lines.getValue());
+init(config.Lines);
 
-// Remove close button
-gui.domElement.querySelector('.close-button').remove();
-// Add element to #controls
+// Add gui.DAT element to #controls
 $controls.appendChild(gui.domElement);
-// Move my css below dat.GUI css
-document.head.appendChild(document.head.querySelector('link[rel="stylesheet"]'));

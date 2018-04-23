@@ -97,7 +97,7 @@ a:hover {
     background: linear-gradient(to right, #88d1ff, #e584fc);
     background-clip: text;
     -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    color: transparent;
   }
 }
 
@@ -115,62 +115,10 @@ a:hover {
   border: 0;
   display: flex;
   flex: 1;
+  background: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 100% 100%"><text fill="%23BBBBBB" x="50%" y="50%" font-family="\'Lucida Grande\', sans-serif" font-size="24" text-anchor="middle">Loading...</text></svg>') 0px 0px no-repeat;
 }
 
-/* Override controls styling (partly borrowed from https://github.com/liabru/dat-gui-light-theme) */
-
+/* dat.GUI styling */
 .dg.main {
   width: 100%;
-}
-.dg.main.taller-than-window .close-button {
-  border-top: 1px solid #ddd;
-}
-.dg.main .close-button {
-  background-color: #e8e8e8;
-}
-.dg.main .close-button:hover {
-  background-color: #ddd;
-}
-.dg {
-  color: #555;
-  text-shadow: none !important;
-}
-.dg.main::-webkit-scrollbar {
-  background: #fafafa;
-}
-.dg.main::-webkit-scrollbar-thumb {
-  background: #bbb;
-}
-.dg li:not(.folder) {
-  background: #fafafa;
-  border-bottom: 1px solid #ddd;
-}
-.dg li.save-row .button {
-  text-shadow: none !important;
-}
-.dg li.title {
-  background: #e8e8e8 url(data:image/gif;base64,R0lGODlhBQAFAJEAAP////Pz8////////yH5BAEAAAIALAAAAAAFAAUAAAIIlI+hKgFxoCgAOw==) 6px 10px no-repeat;
-}
-.dg .cr.function:hover, .dg .cr.boolean:hover {
-  background: #fff;
-}
-.dg .c input[type=text] {
-  background: #e9e9e9;
-}
-.dg .c input[type=text]:hover {
-  background: #eee;
-}
-.dg .c input[type=text]:focus {
-  background: #eee;
-  color: #555;
-}
-.dg .c .slider {
-  background: #e9e9e9;
-}
-.dg .c .slider:hover {
-  background: #eee;
-}
-.dg li.save-row .button, .dg li.save-row .button.gears {
-  background-color: #bbb;
-  /* box-shadow: none; */
 }

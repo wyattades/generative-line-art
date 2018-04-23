@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "dat.gui": "^0.7.1",
+    "dat.gui": "git+https://github.com/wyattades/dat.gui.git",
     "two.js": "^0.7.0-alpha.1"
   }
 }
