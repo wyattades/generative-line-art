@@ -7,6 +7,13 @@
 */
 
 const MARGIN = 100;
+const ASPECT_RATIOS = {
+  '16:9': 1.7777777778,
+  '4:3': 1.3333333333,
+  '1:1': 1,
+  '3:4': 0.75,
+  '9:16': 0.5625,
+};
 
 /*
   DOM elements
@@ -44,17 +51,17 @@ const setBackground = (color) => {
   Config object: contains all config default values
 */
 
-const otherConfig = {
-  marginX: 50, // where to start and stop curving lines
-  marginY: 80, // initial lines are created between these margins
-  segments: 200, // how many segments to draw for each line
-  lines: 80, // number of unique lines
-  w: 600, h: 600, // size of canvas
-  rand: 0.8, // randomizer from segment to segment
-  slopeWeight: 0.5, // weight that a line's slope has on its next value
-  siblingWeight: 0.5, // weight that a line's above sibling's slope has on its next value
-  normalize: 0.002, // exponentially bringing line height back to 0
-};
+// const otherConfig = {
+//   marginX: 50, // where to start and stop curving lines
+//   marginY: 80, // initial lines are created between these margins
+//   segments: 200, // how many segments to draw for each line
+//   lines: 80, // number of unique lines
+//   w: 600, h: 600, // size of canvas
+//   rand: 0.8, // randomizer from segment to segment
+//   slopeWeight: 0.5, // weight that a line's slope has on its next value
+//   siblingWeight: 0.5, // weight that a line's above sibling's slope has on its next value
+//   normalize: 0.002, // exponentially bringing line height back to 0
+// };
 
 const config = {
   'Lines': 20,
@@ -62,8 +69,9 @@ const config = {
   'Iterations': 100,
   'Background': '#a9a9a9',
   'Sibling Weight': 0.02,
-  'Line Change': 5,
+  'Random Noise': 5,
   'Aspect Ratio': 1,
+  'Slope Weight': 0.01,
   'Redraw': () => init(),
   'Export Svg File': () => {
     const innerSvg = document.querySelector('#root > svg').innerHTML;
@@ -90,14 +98,12 @@ const two = new Two(params).appendTo($container);
 
 // Resize canvas when window resizes and DOM fully loads
 const resize = () => {
-  const w = config['Aspect Ratio'], h = 1;
+  const ratio = config['Aspect Ratio'];
+  const scale = Math.min($container.offsetWidth / ratio, $container.offsetHeight);
 
-  const scale = Math.min($container.offsetWidth / w, $container.offsetHeight / h);
-
-  two.width = w * scale;
-  two.height = h * scale;
+  two.width = ratio * scale;
+  two.height = scale;
   two.renderer.setSize(two.width, two.height);
-  console.log(two.width, two.height);
 };
 window.onresize = resize;
 window.onload = resize;
@@ -128,13 +134,22 @@ const init = () => {
   two.play();
 };
 
-const lastY = (line) => line.vertices[line.vertices.length - 1].y;
+// const lastY = (line) => line.vertices[line.vertices.length - 1].y;
+const getVel = (line) => {
+  const verts = line.vertices;
+  const length = verts.length;
+
+  if (length < 2) return 0;
+
+  return verts[length - 1].y - verts[length - 2].y;
+};
 
 const moveLines = (iter) => {
 
   const sibWeight = config['Sibling Weight'],
-        lineChange = config['Line Change'],
-        speed = (two.width - 2 * MARGIN) / config['Iterations'];
+        lineChange = config['Random Noise'],
+        speed = (two.width - 2 * MARGIN) / config['Iterations'],
+        slopeWeight = config['Slope Weight'];
 
   for (let i = 0; i < lines.children.length; i++) {
     const line = lines.children[i];
@@ -143,10 +158,15 @@ const moveLines = (iter) => {
     
     if (i > 0) {
       const prev = lines.children[i - 1];
-      weight -= sibWeight * (lastY(line) - lastY(prev));
+      // weight -= sibWeight * (lastY(line) - lastY(prev));
+      weight += sibWeight * getVel(prev);
     } else if (i < lines.children.length - 1) {
-      const next = lines.children[i + 1];
-      weight += sibWeight * (lastY(next) - lastY(line));
+      // const next = lines.children[i + 1];
+      // weight += sibWeight * (lastY(next) - lastY(line));
+    }
+
+    if (line.vertices.length > 1) {
+      weight += slopeWeight * getVel(line);
     }
 
     const v = new Two.Vector(
@@ -185,19 +205,20 @@ const gui = new dat.GUI({
 
 gui.remember(config);
 
-gui.add(config, 'Aspect Ratio', { '4:3': 1.333, '1:1': 1, '3:4': 0.75 }).onFinishChange(() => {
+gui.add(config, 'Aspect Ratio', ASPECT_RATIOS).onFinishChange(() => {
   resize();
   init();
 });
-gui.add(config, 'Lines', 1, 100, 1).onFinishChange(init);
+gui.addColor(config, 'Background').onChange(setBackground);
 gui.addColor(config, 'Color').onChange((val) => {
   lines.stroke = val;
   two.render(); // docs say use two.update();
 });
-gui.addColor(config, 'Background').onChange(setBackground);
+gui.add(config, 'Lines', 1, 100, 1).onFinishChange(init);
 gui.add(config, 'Iterations', 1, 300).onFinishChange(init);
 gui.add(config, 'Sibling Weight', 0, 1).onFinishChange(init);
-gui.add(config, 'Line Change', 0, 10).onFinishChange(init);
+gui.add(config, 'Random Noise', 0, 10).onFinishChange(init);
+gui.add(config, 'Slope Weight', 0, 0.1).onFinishChange(init);
 gui.add(config, 'Redraw');
 gui.add(config, 'Export Svg File');
 
