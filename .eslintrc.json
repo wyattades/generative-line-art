@@ -12,6 +12,7 @@
     "sourceType": "module"
   },
   "rules": {
+    "max-len": [2, { "code": 120 }],
     "no-unused-vars": 1,
     "no-undef": 2,
     "key-spacing": 2,
