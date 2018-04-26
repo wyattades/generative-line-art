@@ -6,6 +6,7 @@
   Constants
 */
 
+const EXPORT_SIZE = 1600;
 const MARGIN = 100;
 const ASPECT_RATIOS = {
   '16:9': 1.7777777778,
@@ -64,24 +65,27 @@ const setBackground = (color) => {
 // };
 
 const config = {
-  lines: 20,
+  lineCount: 20,
   color: '#000000',
   iterations: 100,
-  thickness: 1,
+  lineWidth: 1,
   background: '#a9a9a9',
   sibWeight: 0.02,
   lineChange: 5,
   aspectRatio: 1,
   slopeWeight: 0.01,
+  randomStart: false,
+  curved: true,
   'Redraw': () => init(),
   'Export Svg File': () => {
     const innerSvg = document.querySelector('#root > svg').innerHTML;
-    const svgText = `<svg
-        width="${1600 * config['Aspect Ratio']}" height="1600"
-        viewBox="0 0 ${two.width} ${two.height}" xmlns="http://www.w3.org/2000/svg">
-      <rect width="100%" height="100%" fill="${config.Background}"/>
-      ${innerSvg.replace(/fill="transparent"/g, 'fill="none"')}
-    </svg>`;
+    const svgText = `\
+<svg width="${EXPORT_SIZE * config.aspectRatio}" height="${EXPORT_SIZE}" \
+viewBox="0 0 ${two.width} ${two.height}" xmlns="http://www.w3.org/2000/svg">
+<metadata><meta name="json-config">${JSON.stringify(config)}</meta></metadata>
+<rect width="100%" height="100%" fill="${config.background}"/>
+${innerSvg}
+</svg>`;
 
     download('art.svg', svgText);
   },
@@ -94,23 +98,20 @@ let _config;
   Setup two.js
 */
 
-const params = {
-  width: $container.offsetWidth,
-  height: $container.offsetHeight,
-};
-const two = new Two(params).appendTo($container);
+const two = new Two().appendTo($container);
 
-// Resize canvas when window resizes and DOM fully loads
 const resize = () => {
-  const ratio = config.aspectRatio;
-  const scale = Math.min($container.offsetWidth / ratio, $container.offsetHeight);
-
-  two.width = ratio * scale;
+  const scale = Math.min($container.offsetWidth / config.aspectRatio, $container.offsetHeight);
+  
+  two.width = config.aspectRatio * scale;
   two.height = scale;
   two.renderer.setSize(two.width, two.height);
 };
+
+// Resize when window resizes and when DOM fully loads
 window.onresize = resize;
-window.onload = resize;
+if (document.readyState !== 'complete') window.onload = resize;
+resize();
 
 /*
   Render shapes
@@ -119,29 +120,35 @@ window.onload = resize;
 const lines = two.makeGroup();
 lines.translation.set(MARGIN, MARGIN);
 
-let iter = 0;
+let iter;
 
 const init = () => {
-  setBackground(config.background);
-  iter = 0;
+  // Reset background
+
+  const { lineCount, curved, randomStart } = config;
+  const height = two.height - 2 * MARGIN;
+  const deltaY = height / lineCount;
+
+  // Reset lines
   lines.remove(lines.children);
-
-  const distBetween = (two.height - 2 * MARGIN) / config.lines;
-
-  for (let i = 0; i < config.lines; i++) { // Add lines to group
-    const line = two.makeCurve(0, i * distBetween, true);
-    lines.add(line);
+  for (let i = 0; i < lineCount; i++) { // Add lines to group
+    const line = two.makePath(0, randomStart ? rand(0, height) : deltaY * i, true)
+    .addTo(lines);
+    line.curved = curved;
   }
-  lines.noFill();
+  lines.cap = 'round';
+  lines.fill = 'none';
   lines.stroke = config.color;
+  lines.linewidth = config.lineWidth;
 
   // Create a static copy of config
   _config = Object.assign({}, config);
 
+  iter = 0;
   two.play();
 };
 
-// const lastY = (line) => line.vertices[line.vertices.length - 1].y;
+const lastY = (line) => line.vertices[line.vertices.length - 1].y;
 const getVel = (line) => {
   const verts = line.vertices;
   const length = verts.length;
@@ -177,24 +184,22 @@ const moveLines = (iter) => {
 
     const v = new Two.Vector(
       iter * deltaX,
-      line.vertices[line.vertices.length - 1].y + rand(-lineChange, lineChange) + weight
+      lastY(line) + rand(-lineChange, lineChange) + weight
     );
     line.vertices.push(v);
   }
 };
 
 two.bind('update', (frameCount) => {
-  // run for 100 frames
-  if (iter < _config.iterations) iter++;
-  else if (iter === _config.iterations) {
+  // Run a certain number of iterations
+  if (iter < _config.iterations) {
+    moveLines(iter, frameCount);
+    iter++;
+  } else if (iter === _config.iterations) {
     two.pause();
     iter++;
-    return;
   }
-  else return;
-
-  moveLines(iter, frameCount);
-}).play();
+});
 
 /*
   Controls
@@ -219,19 +224,22 @@ gui.addColor(config, 'color').name('Line Color').onChange((val) => {
   lines.stroke = val;
   two.render(); // docs say use two.update();
 });
-gui.add(config, 'thickness', 1, 20, 1).name('Line Thickness').onChange((val) => {
+gui.add(config, 'lineWidth', 1, 10, 1).name('Line Width').onChange((val) => {
   lines.linewidth = val;
   two.render();
 });
-gui.add(config, 'lines', 1, 100, 1).name('Lines').onFinishChange(init);
-gui.add(config, 'iterations', 1, 300).name('Iterations').onFinishChange(init);
+gui.add(config, 'lineCount', 1, 100, 1).name('Lines').onFinishChange(init);
+gui.add(config, 'iterations', 1, 300, 1).name('Iterations').onFinishChange(init);
 gui.add(config, 'sibWeight', 0, 1).name('Sibling Weight').onFinishChange(init);
 gui.add(config, 'lineChange', 0, 10).name('Random Noise').onFinishChange(init);
 gui.add(config, 'slopeWeight', 0, 0.5).name('Slope Weight').onFinishChange(init);
+gui.add(config, 'randomStart').name('Random Start').onFinishChange(init);
+gui.add(config, 'curved').name('Curved').onFinishChange(init);
 gui.add(config, 'Redraw');
 gui.add(config, 'Export Svg File');
 
-init(config.Lines);
+setBackground(config.background);
+init();
 
 // Add gui.DAT element to #controls
 $controls.appendChild(gui.domElement);
