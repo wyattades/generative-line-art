@@ -37,7 +37,7 @@ a:hover {
   justify-content: center;
   align-items: center;
   overflow: hidden;
-  min-width: 300px;
+  /* min-width: 300px; */
   background-color: #a9a9a9;
   border-right: 1px solid #AAA;
 }
@@ -61,6 +61,12 @@ a:hover {
 .flex-row {
   display: flex;
   flex-direction: row;
+}
+@media (max-width: 900px) {
+  .flex-row {
+    flex-direction: column;
+    flex-flow: column-reverse;
+  }
 }
 
 .layout-column {

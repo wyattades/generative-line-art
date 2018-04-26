@@ -64,14 +64,15 @@ const setBackground = (color) => {
 // };
 
 const config = {
-  'Lines': 20,
-  'Color': '#000000',
-  'Iterations': 100,
-  'Background': '#a9a9a9',
-  'Sibling Weight': 0.02,
-  'Random Noise': 5,
-  'Aspect Ratio': 1,
-  'Slope Weight': 0.01,
+  lines: 20,
+  color: '#000000',
+  iterations: 100,
+  thickness: 1,
+  background: '#a9a9a9',
+  sibWeight: 0.02,
+  lineChange: 5,
+  aspectRatio: 1,
+  slopeWeight: 0.01,
   'Redraw': () => init(),
   'Export Svg File': () => {
     const innerSvg = document.querySelector('#root > svg').innerHTML;
@@ -86,6 +87,9 @@ const config = {
   },
 };
 
+// Temporary config object that doesn't change while art is animating
+let _config;
+
 /*
   Setup two.js
 */
@@ -98,7 +102,7 @@ const two = new Two(params).appendTo($container);
 
 // Resize canvas when window resizes and DOM fully loads
 const resize = () => {
-  const ratio = config['Aspect Ratio'];
+  const ratio = config.aspectRatio;
   const scale = Math.min($container.offsetWidth / ratio, $container.offsetHeight);
 
   two.width = ratio * scale;
@@ -118,18 +122,21 @@ lines.translation.set(MARGIN, MARGIN);
 let iter = 0;
 
 const init = () => {
-  setBackground(config.Background);
+  setBackground(config.background);
   iter = 0;
   lines.remove(lines.children);
 
-  const distBetween = (two.height - 2 * MARGIN) / config.Lines;
+  const distBetween = (two.height - 2 * MARGIN) / config.lines;
 
-  for (let i = 0; i < config.Lines; i++) { // Add lines to group
+  for (let i = 0; i < config.lines; i++) { // Add lines to group
     const line = two.makeCurve(0, i * distBetween, true);
     lines.add(line);
   }
   lines.noFill();
-  lines.stroke = config.Color;
+  lines.stroke = config.color;
+
+  // Create a static copy of config
+  _config = Object.assign({}, config);
 
   two.play();
 };
@@ -146,10 +153,8 @@ const getVel = (line) => {
 
 const moveLines = (iter) => {
 
-  const sibWeight = config['Sibling Weight'],
-        lineChange = config['Random Noise'],
-        speed = (two.width - 2 * MARGIN) / config['Iterations'],
-        slopeWeight = config['Slope Weight'];
+  const { sibWeight, lineChange, slopeWeight, iterations } = _config;
+  const deltaX = (two.width - 2 * MARGIN) / iterations;
 
   for (let i = 0; i < lines.children.length; i++) {
     const line = lines.children[i];
@@ -161,8 +166,9 @@ const moveLines = (iter) => {
       // weight -= sibWeight * (lastY(line) - lastY(prev));
       weight += sibWeight * getVel(prev);
     } else if (i < lines.children.length - 1) {
-      // const next = lines.children[i + 1];
+      const next = lines.children[i + 1];
       // weight += sibWeight * (lastY(next) - lastY(line));
+      weight -= sibWeight * getVel(next);
     }
 
     if (line.vertices.length > 1) {
@@ -170,8 +176,8 @@ const moveLines = (iter) => {
     }
 
     const v = new Two.Vector(
-      iter * speed,
-      line.vertices[line.vertices.length-1].y + rand(-lineChange, lineChange) + weight
+      iter * deltaX,
+      line.vertices[line.vertices.length - 1].y + rand(-lineChange, lineChange) + weight
     );
     line.vertices.push(v);
   }
@@ -179,8 +185,8 @@ const moveLines = (iter) => {
 
 two.bind('update', (frameCount) => {
   // run for 100 frames
-  if (iter < config['Iterations']) iter++;
-  else if (iter === config['Iterations']) {
+  if (iter < _config.iterations) iter++;
+  else if (iter === _config.iterations) {
     two.pause();
     iter++;
     return;
@@ -195,7 +201,6 @@ two.bind('update', (frameCount) => {
 */
 
 const gui = new dat.GUI({
-  name: 'My GUI',
   autoPlace: false,
   useLocalStorage: true,
   lightTheme: true,
@@ -205,20 +210,24 @@ const gui = new dat.GUI({
 
 gui.remember(config);
 
-gui.add(config, 'Aspect Ratio', ASPECT_RATIOS).onFinishChange(() => {
+gui.add(config, 'aspectRatio', ASPECT_RATIOS).name('Aspect Ratio').onFinishChange(() => {
   resize();
   init();
 });
-gui.addColor(config, 'Background').onChange(setBackground);
-gui.addColor(config, 'Color').onChange((val) => {
+gui.addColor(config, 'background').name('Background').onChange(setBackground);
+gui.addColor(config, 'color').name('Line Color').onChange((val) => {
   lines.stroke = val;
   two.render(); // docs say use two.update();
 });
-gui.add(config, 'Lines', 1, 100, 1).onFinishChange(init);
-gui.add(config, 'Iterations', 1, 300).onFinishChange(init);
-gui.add(config, 'Sibling Weight', 0, 1).onFinishChange(init);
-gui.add(config, 'Random Noise', 0, 10).onFinishChange(init);
-gui.add(config, 'Slope Weight', 0, 0.1).onFinishChange(init);
+gui.add(config, 'thickness', 1, 20, 1).name('Line Thickness').onChange((val) => {
+  lines.linewidth = val;
+  two.render();
+});
+gui.add(config, 'lines', 1, 100, 1).name('Lines').onFinishChange(init);
+gui.add(config, 'iterations', 1, 300).name('Iterations').onFinishChange(init);
+gui.add(config, 'sibWeight', 0, 1).name('Sibling Weight').onFinishChange(init);
+gui.add(config, 'lineChange', 0, 10).name('Random Noise').onFinishChange(init);
+gui.add(config, 'slopeWeight', 0, 0.5).name('Slope Weight').onFinishChange(init);
 gui.add(config, 'Redraw');
 gui.add(config, 'Export Svg File');
 
