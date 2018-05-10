@@ -82,7 +82,7 @@ const config = {
     const svgText = `\
 <svg width="${EXPORT_SIZE * config.aspectRatio}" height="${EXPORT_SIZE}" \
 viewBox="0 0 ${two.width} ${two.height}" xmlns="http://www.w3.org/2000/svg">
-<metadata><meta name="json-config">${JSON.stringify(config)}</meta></metadata>
+<desc id="json-config">${JSON.stringify(config)}"</desc>
 <rect width="100%" height="100%" fill="${config.background}"/>
 ${innerSvg}
 </svg>`;
