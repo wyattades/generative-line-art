@@ -52,18 +52,6 @@ const setBackground = (color) => {
   Config object: contains all config default values
 */
 
-// const otherConfig = {
-//   marginX: 50, // where to start and stop curving lines
-//   marginY: 80, // initial lines are created between these margins
-//   segments: 200, // how many segments to draw for each line
-//   lines: 80, // number of unique lines
-//   w: 600, h: 600, // size of canvas
-//   rand: 0.8, // randomizer from segment to segment
-//   slopeWeight: 0.5, // weight that a line's slope has on its next value
-//   siblingWeight: 0.5, // weight that a line's above sibling's slope has on its next value
-//   normalize: 0.002, // exponentially bringing line height back to 0
-// };
-
 const config = {
   lineCount: 20,
   color: '#000000',
