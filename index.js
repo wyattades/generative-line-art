@@ -53,15 +53,15 @@ const setBackground = (color) => {
 */
 
 const config = {
-  lineCount: 20,
-  color: '#000000',
-  iterations: 100,
+  lineCount: 50,
+  color: '#FFFFFF',
+  iterations: 150,
   lineWidth: 1,
-  background: '#a9a9a9',
-  sibWeight: 0.02,
-  lineChange: 5,
+  background: '#000000',
+  sibWeight: 0.8,
+  lineChange: 2.5,
   aspectRatio: 1,
-  slopeWeight: 0.01,
+  slopeWeight: 0.08,
   randomStart: false,
   curved: true,
   'Redraw': () => init(),
