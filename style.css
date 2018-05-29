@@ -29,6 +29,8 @@ p:last-child {
 nav {
   display: flex;
   justify-content: space-around;
+  max-width: 400px;
+  margin: 0 auto;
 }
 nav p {
   margin: 0 8px;

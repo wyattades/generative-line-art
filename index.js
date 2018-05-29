@@ -99,7 +99,6 @@ const resize = () => {
 // Resize when window resizes and when DOM fully loads
 window.onresize = resize;
 if (document.readyState !== 'complete') window.onload = resize;
-resize();
 
 /*
   Render shapes
@@ -226,6 +225,7 @@ gui.add(config, 'curved').name('Curved').onFinishChange(init);
 gui.add(config, 'Redraw');
 gui.add(config, 'Export Svg File');
 
+resize();
 setBackground(config.background);
 init();
 

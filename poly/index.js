@@ -54,6 +54,65 @@ const setBackground = (color) => {
   $container.style.backgroundColor = color;
 };
 
+const hslToHex = (_, _h, _s, _l) => {
+  const h = parseInt(_h) / 360,
+        s = parseInt(_s) / 100,
+        l = parseInt(_l) / 100;
+  let r, g, b;
+  if (s === 0) {
+    r = g = b = l; // achromatic
+  } else {
+    const hue2rgb = (p, q, t) => {
+      if (t < 0) t += 1;
+      if (t > 1) t -= 1;
+      if (t < 1 / 6) return p + (q - p) * 6 * t;
+      if (t < 1 / 2) return q;
+      if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+      return p;
+    };
+    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+    const p = 2 * l - q;
+    r = hue2rgb(p, q, h + 1 / 3);
+    g = hue2rgb(p, q, h);
+    b = hue2rgb(p, q, h - 1 / 3);
+  }
+  const toHex = x => {
+    const hex = Math.round(x * 255).toString(16);
+    return hex.length === 1 ? '0' + hex : hex;
+  };
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+};
+
+const hexToHsl = (hex) => {
+  const match = hex.match(/#(.{2})(.{2})(.{2})/);
+
+  const r = parseInt(match[1], 16) / 255;
+  const g = parseInt(match[2], 16) / 255;
+  const b = parseInt(match[3], 16) / 255;
+
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  let h, s, l = (max + min) / 2;
+
+  if (max === min){
+    h = s = 0; // achromatic
+  } else {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch(max) {
+      case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+      case g: h = (b - r) / d + 2; break;
+      case b: h = (r - g) / d + 4; break;
+    }
+    h /= 6;
+  }
+
+  h = Math.round(h * 360);
+  s = Math.round(s * 100);
+  l = Math.round(l * 100);
+
+  return `hsl(${h},${s}%,${l}%)`;
+};
+
 /*
   Config object: contains all config default values
 */
@@ -71,10 +130,11 @@ const config = {
   randomStart: false,
   'Redraw': () => init(),
   'Export Svg File': () => {
-    const innerSvg = document.querySelector('#root > svg').innerHTML;
+    const innerSvg = document.querySelector('#root > svg').innerHTML
+    .replace(/hsl\((\d+),(\d+)%,(\d+)%\)/g, hslToHex);
     const svgText = `\
 <svg width="${EXPORT_SIZE * config.aspectRatio}" height="${EXPORT_SIZE}" \
-viewBox="0 0 ${two.width} ${two.height}" xmlns="http://www.w3.org/2000/svg">
+viewBox="0 0 ${two.width} ${two.height}" xmlns="http://www.w3.org/2000/svg" version="1.1">
 <desc id="json-config">${JSON.stringify(config)}"</desc>
 <rect width="100%" height="100%" fill="${config.background}"/>
 ${innerSvg}
@@ -104,7 +164,6 @@ const resize = () => {
 // Resize when window resizes and when DOM fully loads
 window.onresize = resize;
 if (document.readyState !== 'complete') window.onload = resize;
-resize();
 
 /*
   Render shapes
@@ -151,10 +210,12 @@ const init = () => {
   // }
   const parent = two.makePath(0, 0, width, 0, width, height, 0, height, true)
   .addTo(shapes);
-  parent.fill = `hsl(${randi(0, 360)},100%,50%)`;
+  parent.fill = hexToHsl(config.color);
 
   // shapes.fill = config.color;
+  // shapes.noStroke(); 
   shapes.stroke = 'none';
+  shapes.cap = 'none';
   // shapes.strokeWeight = config.lineWidth;
 
   // Create a static copy of config
@@ -172,14 +233,20 @@ const lessColor = (color) => {
     return color;
   }
 
-  const h = (parseInt(m[1]) - 2),
+  const sub = (val, amount, l) => {
+    val -= amount;
+    if (l) return Math.max(0, val);
+    return val < 0 ? val + 360 : val;
+  };
+
+  const h = sub(parseInt(m[1]), 2),
         s = parseInt(m[2]),
-        l = parseInt(m[3]);
-  // console.log(h,s,l);
-  return `hsl(${h < 0 ? h + 360 : h},${s}%,${l}%)`;
+        l = sub(parseInt(m[3]), randi(1, 3), true);
+
+  return `hsl(${h},${s}%,${l}%)`;
 };
 
-const moveLines = (iter) => {
+const moveLines = () => {
   
   const last = shapes.children[shapes.children.length - 1];
   const child = makeChild(last)
@@ -217,23 +284,25 @@ gui.add(config, 'aspectRatio', ASPECT_RATIOS).name('Aspect Ratio').onFinishChang
   init();
 });
 gui.addColor(config, 'background').name('Background').onChange(setBackground);
-gui.addColor(config, 'color').name('Color').onChange((val) => {
-  shapes.children[0].fill = val;
-  two.render(); // docs say use two.update();
-});
-gui.add(config, 'lineWidth', 1, 10, 1).name('Line Width').onChange((val) => {
-  shapes.linewidth = val;
-  two.render();
-});
-gui.add(config, 'lineCount', 1, 100, 1).name('Lines').onFinishChange(init);
+gui.addColor(config, 'color').name('Color').onFinishChange(init);
+// .onChange((val) => {
+//   shapes.children[0].fill = val;
+//   two.render(); // docs say use two.update();
+// });
+// gui.add(config, 'lineWidth', 1, 10, 1).name('Line Width').onChange((val) => {
+//   shapes.linewidth = val;
+//   two.render();
+// });
+// gui.add(config, 'lineCount', 1, 100, 1).name('Lines').onFinishChange(init);
 gui.add(config, 'iterations', 0, 200, 1).name('Iterations').onFinishChange(init);
-gui.add(config, 'sibWeight', 0, 1).name('Sibling Weight').onFinishChange(init);
-gui.add(config, 'lineChange', 0, 10).name('Random Noise').onFinishChange(init);
-gui.add(config, 'slopeWeight', 0, 0.5).name('Slope Weight').onFinishChange(init);
-gui.add(config, 'randomStart').name('Random Start').onFinishChange(init);
+// gui.add(config, 'sibWeight', 0, 1).name('Sibling Weight').onFinishChange(init);
+// gui.add(config, 'lineChange', 0, 10).name('Random Noise').onFinishChange(init);
+// gui.add(config, 'slopeWeight', 0, 0.5).name('Slope Weight').onFinishChange(init);
+// gui.add(config, 'randomStart').name('Random Start').onFinishChange(init);
 gui.add(config, 'Redraw');
 gui.add(config, 'Export Svg File');
 
+resize();
 setBackground(config.background);
 init();
 
