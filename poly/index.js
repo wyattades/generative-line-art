@@ -7,7 +7,7 @@
 */
 
 const EXPORT_SIZE = 1600;
-const MARGIN = 100;
+const MARGIN = 50;
 const ASPECT_RATIOS = {
   '16:9': 1.7777777778,
   '4:3': 1.3333333333,
@@ -33,10 +33,6 @@ const rand = (min, max) => {
 
 const randi = (min, max) => Math.floor(rand(min, max));
 
-const randColor = (hue) => {
-  return `rgb(${randi(0,255)},${randi(0,255)},${randi(0,255)})`;
-};
-
 const download = (filename, text) => {
   const temp = document.createElement('a');
   temp.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
@@ -53,6 +49,10 @@ const download = (filename, text) => {
 const setBackground = (color) => {
   $container.style.backgroundColor = color;
 };
+
+/*
+  Color helper functions
+*/
 
 const hslToHex = (_, _h, _s, _l) => {
   const h = parseInt(_h) / 360,
@@ -83,7 +83,7 @@ const hslToHex = (_, _h, _s, _l) => {
   return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
 };
 
-const hexToHsl = (hex) => {
+const _hexToHsl = (hex) => {
   const match = hex.match(/#(.{2})(.{2})(.{2})/);
 
   const r = parseInt(match[1], 16) / 255;
@@ -91,7 +91,8 @@ const hexToHsl = (hex) => {
   const b = parseInt(match[3], 16) / 255;
 
   const max = Math.max(r, g, b), min = Math.min(r, g, b);
-  let h, s, l = (max + min) / 2;
+  let h, s;
+  const l = (max + min) / 2;
 
   if (max === min){
     h = s = 0; // achromatic
@@ -106,9 +107,52 @@ const hexToHsl = (hex) => {
     h /= 6;
   }
 
-  h = Math.round(h * 360);
-  s = Math.round(s * 100);
-  l = Math.round(l * 100);
+  return {
+    h: Math.round(h * 360),
+    s: Math.round(s * 100),
+    l: Math.round(l * 100),
+  };
+};
+
+const hexToHsl = (hex) => {
+  const { h, s, l } = _hexToHsl(hex);
+  return `hsl(${h},${s}%,${l}%)`;
+};
+
+const lerpColor = ({ h, s, l }, lerp) => {
+  if (config.random) {
+    h += randi(-40, 40);
+    s += randi(-40, 40);
+    l -= randi(-20, 20);
+    l = Math.max(Math.min(l, 100), 0);
+  } else {
+    h -= lerp * 180;
+    s -= lerp * 80;
+  }
+
+  h = h < 0 ? h + 360 : h;
+  s = Math.max(Math.min(s, 100), 0);
+
+  return hslToHex(null, h, s, l);
+};
+
+const hsl = /hsl\((\d+),(\d+)%,(\d+)%\)/;
+const lessColor = (color) => {
+  const m = color.match(hsl);
+  if (!m) {
+    console.log('bad:', color);
+    return color;
+  }
+
+  const sub = (val, amount, l) => {
+    val -= amount;
+    if (l) return Math.max(0, val);
+    return val < 0 ? val + 360 : val;
+  };
+
+  const h = sub(parseInt(m[1]), 2),
+        s = parseInt(m[2]),
+        l = sub(parseInt(m[3]), randi(1, 3), true);
 
   return `hsl(${h},${s}%,${l}%)`;
 };
@@ -118,16 +162,14 @@ const hexToHsl = (hex) => {
 */
 
 const config = {
-  lineCount: 20,
-  color: '#000000',
-  iterations: 100,
-  lineWidth: 1,
+  color: '#ff7100',
   background: '#000000',
-  sibWeight: 0.02,
-  lineChange: 5,
+  stroke: '#000000',
+  showStroke: true,
+  random: false,
+  iterations: 100,
   aspectRatio: 1,
-  slopeWeight: 0.01,
-  randomStart: false,
+  type: 'grid',
   'Redraw': () => init(),
   'Export Svg File': () => {
     const innerSvg = document.querySelector('#root > svg').innerHTML
@@ -154,7 +196,8 @@ let _config;
 const two = new Two().appendTo($container);
 
 const resize = () => {
-  const scale = Math.min($container.offsetWidth / config.aspectRatio, $container.offsetHeight);
+  const scale = Math.min(($container.offsetWidth - 2 * MARGIN) / config.aspectRatio, 
+    $container.offsetHeight - 2 * MARGIN);
   
   two.width = config.aspectRatio * scale;
   two.height = scale;
@@ -170,7 +213,6 @@ if (document.readyState !== 'complete') window.onload = resize;
 */
 
 const shapes = two.makeGroup();
-shapes.translation.set(MARGIN, MARGIN);
 
 let iter;
 
@@ -188,35 +230,91 @@ const makeChild = (parent) => {
   const vs = child.vertices;
   const i = randi(0, vs.length); // random index
   const s = Math.random() < 0.5;
-  middleAnchor(vs[i], s ? vs[i] : (i === 0 ? vs[vs.length - 1] : vs[i - 1]), s ? (i === vs.length - 1 ? vs[0] : vs[i + 1]) : vs[i]);
+  middleAnchor(vs[i],
+    s ? vs[i] : (i === 0 ? vs[vs.length - 1] : vs[i - 1]),
+    s ? (i === vs.length - 1 ? vs[0] : vs[i + 1]) : vs[i]);
   return child;
 };
 
-const init = () => {
-  // Reset background
+const TYPES = {
 
-  const { lineCount, randomStart } = config;
-  const width = two.width - 2 * MARGIN;
-  const height = two.height - 2 * MARGIN;
-  // const deltaY = height / lineCount;
+  tunnel: {
+    init() {
+      const parent = two.makePath(0, 0, two.width, 0, two.width, two.height, 0, two.height, true)
+      .addTo(shapes);
+      parent.fill = hexToHsl(config.color);
+      parent.stroke = 'none';
+    },
+    update() {
+      const last = shapes.children[shapes.children.length - 1];
+      const child = makeChild(last)
+      .addTo(shapes);
+    
+      child.fill = lessColor(last.fill);
+      child.stroke = 'none';
+    },
+  },
+
+  grid: {
+    init() {
+
+      const { showStroke, stroke } = config;
+
+      const amountY = 12,
+            amountX = Math.round(amountY * config.aspectRatio);
+
+      const spacing = two.width / amountX;
+      const ratio = 1 / (amountX * amountX + amountY * amountY);
+
+      this.points = [];
+
+      const color = _hexToHsl(config.color);
+
+      const P = (x, y) => (x > 0 && x < amountX && y > 0 && y < amountY) ?
+        this.points[y - 1][x - 1] :
+        new Two.Anchor(x * spacing, y * spacing);
+
+      for (let i = 1; i <= amountY; i++) {
+        const row = [];
+        this.points.push(row);
+        for (let j = 1; j <= amountX; j++) {
+          row.push(new Two.Anchor(j * spacing, i * spacing));
+
+          const triangle = two.makePath([], true)
+          .addTo(shapes);
+          triangle.vertices.push(P(j - 1, i - 1), P(j, i - 1), P(j, i));
+          triangle.fill = lerpColor(color, ratio * (j * j + i * i));
+          triangle.stroke = showStroke ? stroke : triangle.fill;
+
+          const triangle2 = two.makePath([], false)
+          .addTo(shapes);
+          triangle2.vertices.push(P(j - 1, i - 1), P(j - 1, i), P(j, i));
+          triangle2.fill = lerpColor(color, ratio * (j * j + i * i) + 0.02);
+          triangle2.stroke = showStroke ? stroke : triangle2.fill;
+        }
+      }
+    },
+    update() {
+      const VEL = 10;
+      for (const row of this.points) {
+        for (const point of row) {
+          point.x += rand(-VEL, VEL);
+          point.y += rand(-VEL, VEL);
+        }
+      }
+    },
+  },
+
+};
+
+const init = () => {
+
+  conf1.display = conf2.display = conf3.display = config.type === 'tunnel' ? 'none' : 'block';
 
   // Reset lines
   shapes.remove(shapes.children);
-  // for (let i = 0; i < lineCount; i++) { // Add lines to group
-  //   const shape = two.makePath(rand(0, height), rand(0, height), rand(0, height), rand(0, height), rand(0, height), rand(0, height), false)
-  //   .addTo(shapes);
-    
-  //   shape.fill = randColor();
-  // }
-  const parent = two.makePath(0, 0, width, 0, width, height, 0, height, true)
-  .addTo(shapes);
-  parent.fill = hexToHsl(config.color);
 
-  // shapes.fill = config.color;
-  // shapes.noStroke(); 
-  shapes.stroke = 'none';
-  shapes.cap = 'none';
-  // shapes.strokeWeight = config.lineWidth;
+  TYPES[config.type].init();
 
   // Create a static copy of config
   _config = Object.assign({}, config);
@@ -225,40 +323,14 @@ const init = () => {
   two.play();
 };
 
-const hsl = /hsl\((\d+),(\d+)%,(\d+)%\)/;
-const lessColor = (color) => {
-  const m = color.match(hsl);
-  if (!m) {
-    console.log('bad:', color);
-    return color;
-  }
-
-  const sub = (val, amount, l) => {
-    val -= amount;
-    if (l) return Math.max(0, val);
-    return val < 0 ? val + 360 : val;
-  };
-
-  const h = sub(parseInt(m[1]), 2),
-        s = parseInt(m[2]),
-        l = sub(parseInt(m[3]), randi(1, 3), true);
-
-  return `hsl(${h},${s}%,${l}%)`;
-};
-
-const moveLines = () => {
-  
-  const last = shapes.children[shapes.children.length - 1];
-  const child = makeChild(last)
-  .addTo(shapes);
-
-  child.fill = lessColor(last.fill);
-};
-
 two.bind('update', (frameCount) => {
+
+  // Only render every 3 frames
+  if (frameCount % 3 !== 0) return;
+
   // Run a certain number of iterations
   if (iter < _config.iterations) {
-    moveLines(iter, frameCount);
+    TYPES[_config.type].update(iter, frameCount);
     iter++;
   } else if (iter === _config.iterations) {
     two.pause();
@@ -284,24 +356,19 @@ gui.add(config, 'aspectRatio', ASPECT_RATIOS).name('Aspect Ratio').onFinishChang
   init();
 });
 gui.addColor(config, 'background').name('Background').onChange(setBackground);
-gui.addColor(config, 'color').name('Color').onFinishChange(init);
-// .onChange((val) => {
-//   shapes.children[0].fill = val;
-//   two.render(); // docs say use two.update();
-// });
-// gui.add(config, 'lineWidth', 1, 10, 1).name('Line Width').onChange((val) => {
-//   shapes.linewidth = val;
-//   two.render();
-// });
-// gui.add(config, 'lineCount', 1, 100, 1).name('Lines').onFinishChange(init);
-gui.add(config, 'iterations', 0, 200, 1).name('Iterations').onFinishChange(init);
-// gui.add(config, 'sibWeight', 0, 1).name('Sibling Weight').onFinishChange(init);
-// gui.add(config, 'lineChange', 0, 10).name('Random Noise').onFinishChange(init);
-// gui.add(config, 'slopeWeight', 0, 0.5).name('Slope Weight').onFinishChange(init);
-// gui.add(config, 'randomStart').name('Random Start').onFinishChange(init);
+gui.addColor(config, 'color').name('Fill').onFinishChange(init);
+const conf1 = gui.addColor(config, 'stroke').name('Stroke').onFinishChange(init)
+.domElement.parentElement.parentElement.style;
+const conf2 = gui.add(config, 'showStroke').name('Show Stroke?').onFinishChange(init)
+.domElement.parentElement.parentElement.style;
+const conf3 = gui.add(config, 'random').name('Random Color?').onFinishChange(init)
+.domElement.parentElement.parentElement.style;
+gui.add(config, 'iterations', 0, 100, 1).name('Iterations').onFinishChange(init);
+gui.add(config, 'type', Object.keys(TYPES)).name('Algorithm Type').onFinishChange(init);
 gui.add(config, 'Redraw');
 gui.add(config, 'Export Svg File');
 
+// Setup
 resize();
 setBackground(config.background);
 init();
